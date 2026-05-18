@@ -23,7 +23,7 @@ def run_udp_server(host='127.0.0.1', port=12345):
             # Decode and print the received message
             print(f"Received '{header}' from {client_address}")
             
-            message = Message(int.from_bytes(header))
+            message = Message(header=int.from_bytes(header))
             
             print(f'{message.respond}, {message.msgtype}, {message.version}')
             
