@@ -21,6 +21,8 @@ class Response:
     
     message_id - int, extended header info
     block_len - int, extended header info, no. of bytes to be sent
+    
+    data_b
     """
 
     

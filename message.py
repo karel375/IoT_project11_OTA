@@ -7,22 +7,24 @@ client_msg_types = {0: "POLL", 1: "ACK", 2: "NACK"}
 client_msg_types_rev = {v: k for k, v in client_msg_types.items()}
 
 class Message:
-    def __init__(self, header=None, respond=False, msgtype="POLL", version=0):
+    def __init__(self, bytes=None, respond=False, msgtype="POLL", version=0, temperature=0):
         # Initialize instance variables
-        self.data = []
+
         
-        if header is not None:
+        if bytes is not None:
             # ==========================================
-            # DECODE MODE: Initialize from a single byte
+            # DECODE MODE: Initialize from bytes
             # ==========================================
-            self.header = header
-            self.respond = bool((header & REPLY_MASK) >> 7)
+            self.header = bytes[0]
+            self.respond = bool((self.header & REPLY_MASK) >> 7)
             
             # Extract the 3 bits for message type (Fixed precedence with parentheses)
-            msg_val = (header & MSGTYPE_MASK) >> 4
+            msg_val = (self.header & MSGTYPE_MASK) >> 4
             self.msgtype = client_msg_types.get(msg_val, "INVALID")
             
-            self.version = header & VERSION_MASK
+            self.version = self.header & VERSION_MASK
+            
+            self.temperature = ((bytes[1] << 8) + bytes[2])/100.0
             
         else:
             # ==========================================
@@ -44,9 +46,11 @@ class Message:
             
             # Combine them using bitwise OR to create the header
             self.header = reply_bits | msg_bits | ver_bits
-
+            self.temperature = temperature
+            
+            self.msg_byte = bytearray([self.header, int(self.temperature*100) >> 8, int(self.temperature*100) & 0xFF   ])
     def add_data(self, data_byte):
         self.data.append(data_byte)
 
     def __repr__(self):
-        return f"<Message header={bin(self.header)} respond={self.respond} msgtype='{self.msgtype}' version={self.version}>"
+        return f"<Message header={bin(self.header)} respond={self.respond} msgtype='{self.msgtype}' version={self.version} temperature{self.temperature}>"

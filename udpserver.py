@@ -3,11 +3,11 @@ from message import Message
 from response import Response
 
 HOST = "localhost"
-PORT = 12345
+PORT = 12342
 
 
 
-def run_udp_server(host='127.0.0.1', port=12345):
+def run_udp_server(host=HOST, port=PORT):
     # Create a UDP socket (SOCK_DGRAM specifies UDP)
     server_socket = socket.socket(socket.AF_INET, socket.SOCK_DGRAM)
     
@@ -18,19 +18,20 @@ def run_udp_server(host='127.0.0.1', port=12345):
     try:
         while True:
             # Wait for a message (up to 1024 bytes)
-            header, client_address = server_socket.recvfrom(1)            
+            rawbytes, client_address = server_socket.recvfrom(3)          
+            message = bytearray(rawbytes)
             
             # Decode and print the received message
-            print(f"Received '{header}' from {client_address}")
+            print(f"Received '{message}' from {client_address}")
             
-            message = Message(header=int.from_bytes(header))
+            message = Message(bytes=message)
             
-            print(f'{message.respond}, {message.msgtype}, {message.version}')
+            print(f'{message.respond}, {message.msgtype}, {message.version}, {message.temperature}')
             
-            server_header = Response("UPDATE_START", 2, []).header_b
+            #server_header = Response("UPDATE_START", 2, []).header_b
             
-            server_socket.sendto(server_header, client_address)
-            print(f"Echoed message back to {client_address}\n")
+           # server_socket.sendto(server_header, client_address)
+            #print(f"Echoed message back to {client_address}\n")
             
     except KeyboardInterrupt:
         print("\nServer shutting down.")
