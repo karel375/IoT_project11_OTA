@@ -1,1 +1,1 @@
-# IoT_project11_OTA
+# BPC-IoT Projekt #11 OTA aktualizace skrze CIoT technologie
