@@ -11,31 +11,30 @@ class Response:
     """
     fields:
     header - int representation of header
-    header_b - bytes object representation of header
     
     msgtype - string, flag
     header_length - int, flag
     
     header_ext - list of int representations of extended header bytes
-    header_ext_b - byte object representation of extended header
     
     message_id - int, extended header info
     block_len - int, extended header info, no. of bytes to be sent
     
-    data_b
+    resp_byte - bytearray representation of the entire response
+    
+    data - bytearray of block
     """
 
     
     def __init__(self, header=None, msgtype="UPDATE_START", header_length=1, msg_id=0, block_len=1024, data=None):
         # Initialize instance-specific data list
-        self.data = data if data is not None else []
+        self.data = data if data is not None else bytearray()
         
         if header is not None: # client side -> decode from received data
             # ==========================================
             # DECODE MODE: Initialize from a single byte
             # ==========================================
             self.header = header
-            self.header_b = self.header.to_bytes(1, byteorder='big')
             
             # Extract the 3 bits for message type
             msg_val = (header & MSGTYPE_MASK) >> 4

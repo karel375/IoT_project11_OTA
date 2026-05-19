@@ -9,7 +9,7 @@ port = 12342
 # Create a UDP socket
 client_socket = socket.socket(socket.AF_INET, socket.SOCK_DGRAM)
 
-message = Message(respond=True, msgtype="POLL", version=3, temperature=23.4)
+message = Message(respond=True, msgtype="POLL", version=3, temperature=24.44)
 
 try:
     # Send data
