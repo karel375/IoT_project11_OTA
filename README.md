@@ -16,7 +16,7 @@ Pro základní komunikaci je vhodnější technologie NB-IoT zejména kvůli lep
 ## Princip funkce jednotlivých částí kódu
 ### Logika komunikace zařízení a serveru
 
-Je potřeba, aby zařízení i server dokázaly rozlišovat různé typy zpráv podle informací v hlavičce
+Zařízení i server budou posílat několik typů zpráv, při přijetí zprávy bude z hlavičky vyčten její typ, délka a id. 
 
 #### Zprávy odesílané serverem
 
