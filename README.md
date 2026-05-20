@@ -5,9 +5,7 @@ Cílem tohoto projektu je provést aktualizaci firmwaru přes CIoT technologie N
 
 ## Technické parametry přenosu
 
-Základní komunikace zařízení a serveru: NB-IoT
-
-Přenos dat při vhodných rádiových podmínkách: LTE Cat-M
+Základní komunikace zařízení a serveru: NB-IoT, při vhodných rádiových podmínkách LTE Cat-M
 
 Transportní protokol: UDP
 
