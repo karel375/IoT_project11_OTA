@@ -7,6 +7,8 @@ Cílem tohoto projektu je provést aktualizaci firmwaru přes CIoT technologie N
 
 Základní komunikace zařízení a serveru: NB-IoT
 
+Přenos dat při vhodných rádiových podmínkách: LTE Cat-M
+
 Transportní protokol: UDP
 
 Aplikační protokol: vlastní
