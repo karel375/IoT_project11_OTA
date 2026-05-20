@@ -33,7 +33,7 @@ Zařízení i server budou posílat několik typů zpráv, při přijetí zpráv
 ### Funkce zařízení
 
 - Zařízení bude měřit teplotu a periodicky ji odesílat na server. Součást zprávy bude i aktuální verze firmwaru.
-- Pokud zařízení přijme zprávu o nové dostupné verzi firmwaru, pošle serveru žádost o jeho zaslání.
+- Pokud zařízení přijme zprávu o nové dostupné verzi firmwaru, potvrdí serveru příjem firmwaru
 - Po přijetí firmwaru provede kontrolní součet SHA256 a porovná ho se součtem vytvořeným serverem
 - Provede aktualizaci. Úspěšná aktualizace bude signalizována změnou barvy blikající LED na zařízení
 
