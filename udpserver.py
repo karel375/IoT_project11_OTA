@@ -5,7 +5,21 @@ from response import Response
 HOST = "localhost"
 PORT = 12342
 
+def split_data(data, block_len):
+    
+    blocks_count = len(data)//block_len + (1 if len(data) % block_len > 0 else 0)
+    data_list = []
+    
+    
+    for i in range(blocks_count):
+        if i*block_len
+        data[i*(block_len):]
 
+    return data_list
+    
+
+def send_blocks():
+    pass  
 
 def run_udp_server(host=HOST, port=PORT):
     # Create a UDP socket (SOCK_DGRAM specifies UDP)
@@ -14,6 +28,8 @@ def run_udp_server(host=HOST, port=PORT):
     # Bind the socket to the IP address and port
     server_socket.bind((host, port))
     print(f"UDP echo server listening on {host}:{port}")
+    #res = Response(msgtype="UPDATE_START", header_length=3, msg_id=1, data=b'helloworld')
+
 
     try:
         while True:
@@ -28,10 +44,16 @@ def run_udp_server(host=HOST, port=PORT):
             
             print(f'{message.respond}, {message.msgtype}, {message.version}, {message.temperature}')
             
-            #server_header = Response("UPDATE_START", 2, []).header_b
+            to_send = b'import socket'
             
-           # server_socket.sendto(server_header, client_address)
-            #print(f"Echoed message back to {client_address}\n")
+            if message.respond == 1:
+                res = Response(msgtype="UPDATE_START", header_length=4, block_id=200, data=to_send, block_len=len(to_send))            
+                server_socket.sendto(res.header_byte, client_address)
+                print(f"Echoed message back to {client_address}\n")
+                if res.header_length > 0:
+                    server_socket.sendto(res.header_ext_byte, client_address)
+                    if res.block_len > 0:
+                        server_socket.sendto(res.data, client_address)
             
     except KeyboardInterrupt:
         print("\nServer shutting down.")
@@ -43,3 +65,4 @@ def run_udp_server(host=HOST, port=PORT):
 
 if __name__ == '__main__':
     run_udp_server()
+    
