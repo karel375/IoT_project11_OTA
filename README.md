@@ -21,7 +21,7 @@ Zařízení i server budou posílat několik typů zpráv, při přijetí zpráv
 #### Zprávy odesílané serverem
 
 - UPDATE_START - pošle informaci, že je na serveru k dispozici novější verze firmwaru
-- NO_UPDATE - pošle informaci, že má zařízení aktuální verzi firmwaru
+- NO_UPDATE - pošle informaci, že má zařízení aktuální verzi firmwaru a signalizuje konec přenosu dat
 - DATA_BLOCK - server zasílá nový firmware
 
 #### Zprávy odesílané zařízením
