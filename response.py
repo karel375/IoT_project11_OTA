@@ -28,7 +28,7 @@ class Response:
     """
 
     
-    def __init__(self, header=None, msgtype=None, header_length=1, block_id=None, block_len=1024, data=None):
+    def __init__(self, header=None, msgtype=None, header_length=0, block_id=None, block_len=1024, data=None):
         # Initialize instance-specific data list
         self.data = data if data is not None else bytearray()
         
@@ -36,14 +36,16 @@ class Response:
             # ==========================================
             # DECODE MODE: Initialize from a single byte
             # ==========================================
-            self.header = header
+            
+            # shitty cast byte to int
+            self.header = bytearray(header)[0]
             
             # Extract the 3 bits for message type
-            msg_val = (header & MSGTYPE_MASK) >> 4
-            self.msgtype = server_msg_types.get(msg_val, "INVALID")
+            msgtype_val = (self.header & MSGTYPE_MASK) >> 4
+            self.msgtype = server_msg_types.get(msgtype_val, "INVALID")
             
             # Extract the 4 bits for header length
-            self.header_length = header & HEADER_SIZE_MASK
+            self.header_length = self.header & HEADER_SIZE_MASK
             
         else:
             # ==========================================
@@ -54,28 +56,33 @@ class Response:
             self.header = 0            
             """Encodes the current string msgtype and header_length into the binary header."""
             # 1. Look up the integer value for the string msgtype, default to 0 if invalid
-            msg_val = server_msg_types_rev.get(self.msgtype, 0)
-            msg_bits = (msg_val << 4) & MSGTYPE_MASK
+            msgtype_val = server_msg_types_rev.get(self.msgtype, 0)
+            msgtype_int = (msgtype_val << 4) & MSGTYPE_MASK
             
             # 2. Ensure header_length doesn't exceed its allocated 4 bits
-            len_bits = self.header_length & HEADER_SIZE_MASK
+            ext_header_len_bits = self.header_length & HEADER_SIZE_MASK
+
+            self.header_byte = bytearray([msgtype_int | ext_header_len_bits])
             
-            # 3. Combine them using bitwise OR            
-            # 4. Create the bytes representation (1 byte long, big-endian)
-            
-            self.header_byte = bytearray([msg_bits | len_bits])
-            
-            self.block_id = block_id
-            self.block_len = block_len
-            
-            self.header_ext_byte = bytearray([block_id >> 8, block_id & 0xFF, block_len >> 8, block_len & 0xFF])
+            if (self.header_length > 0) :
+                self.block_id = block_id
+                self.block_len = block_len
+                block_id_upper = block_id >> 8
+                block_id_lower = block_id & 0xFF
+                
+                block_len_upper = block_len >> 8
+                block_len_lower = block_len & 0xFF
+                self.header_ext_byte = bytearray([block_id_upper, block_id_lower, block_len_upper, block_len_lower])
+                print(self.header_ext_byte)
+                
+
 
     def extend_header(self, header_ext):
         self.header_ext = header_ext
         
         self.block_id = (header_ext[0] << 8) | header_ext[1]
         self.block_len = (header_ext[2] << 8) | header_ext[3]
-
+    
     def edit_header(self, msgtype, header_length):
         """Allows updating the header fields and re-encoding the binary header."""
         self.msgtype = msgtype

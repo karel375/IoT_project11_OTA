@@ -7,31 +7,91 @@ host = '127.0.0.1'
 port = 12342
 
 # Create a UDP socket
-client_socket = socket.socket(socket.AF_INET, socket.SOCK_DGRAM)
+sock = socket.socket(socket.AF_INET, socket.SOCK_DGRAM)
 
-message = Message(respond=True, msgtype="POLL", version=3, temperature=24.44)
+message = Message(respond=True, msgtype="POLL", version=4, temperature=24.44)
+
+def recv_write_payload(sock, client):
+    pass
 
 try:
-    # Send data
+    # Send message with temp and expect response
     print(f"Sending: '{message}'")
-    client_socket.sendto(message.msg_byte, (host, port))
+    sock.sendto(message.msg_byte, (host, port))
     
-    header, server = client_socket.recvfrom(1)
-    print(f"Received: '{bin(header[0])}' from {server}")
-    
-    resp = Response(header=header[0])
-    print(f"{resp.msgtype} {resp.header_length}")
-    if (resp.header_length > 0):
-        ext_header, server = client_socket.recvfrom(resp.header_length)
-        resp.extend_header(ext_header)
-        print(f"ID: {resp.block_id}, len: {resp.block_len}, bytes: {ext_header}")
+    if (message.respond):    
+        # receive header
+        rawbytes = sock.recv(1)
         
-        data_block, server = client_socket.recvfrom(resp.block_len)
+        print(f"Received: '{bin(rawbytes[0])}'")
         
-        with open("fw_new.py", "wb") as file:
-            file.write(data_block)
+        # Decode 1st header byte
+        resp = Response(header=rawbytes)
+        print(f"{resp.msgtype} {resp.header_length}")
+        
+        # update procedure
+        if resp.msgtype == "UPDATE_START":
             
+            # erase previous temp file
+            with open('C:\\Users\\marti\\Documents\\GitHub\\IoT_project11_OTA\\new_fw.py', "wb") as file:
+                file.write(b'')
+            
+            # send ack to start update
+            ack = Message(respond=True, msgtype="ACK")
+            sock.sendto(ack.msg_byte, (host, port))
+            
+            expected_id = 0
+            while True:
+                # get first header byte    
+                rawbytes = sock.recv(1)
+                resp = Response(header=rawbytes)
+                
+                if (resp.msgtype == "NO_UPDATE"):
+                    break
+                
+                # get extended header
+                rawbytes = sock.recv(resp.header_length)
+                resp.extend_header(rawbytes)
+                
+                print(f'{resp.block_id}, {resp.block_len}')
+                
+                if (resp.block_id != expected_id):
+                    # send NACK when the counter does not match
+                    nack = Message(respond=True, msgtype="NACK")
+                    sock.sendto()
+                    
+                    # try to receive the block again
+                    continue
+                
+                ack = Message(respond=True, msgtype="ACK")
+                sock.sendto(ack.msg_byte, (host, port))
+                
+                rawbytes = sock.recv(resp.block_len)
+                with open('C:\\Users\\marti\\Documents\\GitHub\\IoT_project11_OTA\\new_fw.py', 'ab') as file:
+                    file.write(rawbytes)    
+                    
 
+                expected_id += 1
+        elif (resp.msgtype == "NO_UPDATE"):
+            print("nothing to update")
+
+        
+        # If there is an extended header (header_length > 0), receive and decode
+        if (resp.header_length > 0):
+            ext_header, server = sock.recvfrom(resp.header_length)
+            
+            # add extended header to object
+            resp.extend_header(ext_header)
+            print(f"ID: {resp.block_id}, len: {resp.block_len}, bytes: {ext_header}")
+            
+            
+            data_block, server = sock.recvfrom(resp.block_len)
+            
+            with open("fw_new.py", "wb") as file:
+                file.write(data_block)
+except KeyboardInterrupt:
+    print("smrt")
+    exit()
     
 finally:
-    client_socket.close()
+    sock.close()
