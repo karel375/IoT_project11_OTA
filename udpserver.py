@@ -7,6 +7,14 @@ HOST = "localhost"
 PORT = 12342
 CURRENT_VERSION = 3
 
+DIR_PATH = 'C:\\Users\\marti\\Documents\\GitHub\\IoT_project11_OTA\\'
+
+# if absolute path is needed 
+#DIR_PATH = 'path/to/server/dir'
+
+# if relative paths work, use this
+#DIR_PATH = './'
+
 def split_data(data, block_len):
     
     blocks_count = len(data)//block_len + (1 if len(data) % block_len > 0 else 0)
@@ -92,7 +100,7 @@ def run_udp_server(host=HOST, port=PORT):
                         
             if message.respond == 1:
                 if message.version != CURRENT_VERSION and message.msgtype == "POLL":
-                    with open('C:\\Users\\marti\\Documents\\GitHub\\IoT_project11_OTA\\dummy_fw.py', 'rb') as fw:
+                    with open(DIR_PATH + 'dummy_fw.py', 'rb') as fw:
                         payload = fw.read()
 
                     hash = hashlib.sha256()
