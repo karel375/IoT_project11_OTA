@@ -1,6 +1,7 @@
 import socket
 from message import Message
 from response import Response
+import hashlib
 
 HOST = "localhost"
 PORT = 12342
@@ -93,14 +94,17 @@ def run_udp_server(host=HOST, port=PORT):
                 if message.version != CURRENT_VERSION and message.msgtype == "POLL":
                     with open('C:\\Users\\marti\\Documents\\GitHub\\IoT_project11_OTA\\dummy_fw.py', 'rb') as fw:
                         payload = fw.read()
-                    
+
+                    hash = hashlib.sha256()
+                    hash.update(payload)
+                    hashstring = hash.hexdigest()
                     send_payload(sock, client, payload, 1024)
+                    send_payload(sock, client, bytearray(hashstring, 'utf-8'), 32)
                 else:
                     res = Response(msgtype="NO_UPDATE", header_length=0)
                     sock.sendto(res.header_byte, client)
-                
-                    
-                                          
+
+
     except KeyboardInterrupt:
         print("\nServer shutting down.")
     finally:

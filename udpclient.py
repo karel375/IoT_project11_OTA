@@ -1,19 +1,65 @@
 import socket
 from message import Message
 from response import Response
+import hashlib
 
 
 host = '127.0.0.1'
 port = 12342
+pathto = 'C:\\Users\\marti\\Documents\\GitHub\\IoT_project11_OTA\\'
 
 # Create a UDP socket
 sock = socket.socket(socket.AF_INET, socket.SOCK_DGRAM)
 
 message = Message(respond=True, msgtype="POLL", version=4, temperature=24.44)
 
-def recv_write_payload(sock, client):
-    pass
+def recv_write_payload(sock, filename):
+    
+    payload_str = ""
+    
+    # erase previous temp file
+    with open(pathto + filename, "wb") as file:
+        file.write(b'')
+    
+    expected_id = 0
+    while True:
+        # get first header byte    
+        rawbytes = sock.recv(1)
+        resp = Response(header=rawbytes)
+        
+        if (resp.msgtype == "NO_UPDATE"):
+            break
+        
+        # get extended header
+        rawbytes = sock.recv(resp.header_length)
+        resp.extend_header(rawbytes)
+        
+        print(f'{resp.block_id}, {resp.block_len}')
+        
+        if (resp.block_id != expected_id):
+            # send NACK when the counter does not match
+            nack = Message(respond=True, msgtype="NACK")
+            sock.sendto()
+            
+            # try to receive the block again
+            continue
+        
+        ack = Message(respond=True, msgtype="ACK")
+        sock.sendto(ack.msg_byte, (host, port))
+        
+        rawbytes = sock.recv(resp.block_len)
+        payload_str += rawbytes.decode("utf-8")
+        with open(pathto + filename, 'ab') as file:
+            file.write(rawbytes)    
+            
 
+        expected_id += 1
+        
+    return payload_str
+
+#############
+# Main loop #
+#############
 try:
     # Send message with temp and expect response
     print(f"Sending: '{message}'")
@@ -31,47 +77,29 @@ try:
         
         # update procedure
         if resp.msgtype == "UPDATE_START":
-            
-            # erase previous temp file
-            with open('C:\\Users\\marti\\Documents\\GitHub\\IoT_project11_OTA\\new_fw.py', "wb") as file:
-                file.write(b'')
-            
             # send ack to start update
             ack = Message(respond=True, msgtype="ACK")
             sock.sendto(ack.msg_byte, (host, port))
             
-            expected_id = 0
-            while True:
-                # get first header byte    
-                rawbytes = sock.recv(1)
-                resp = Response(header=rawbytes)
-                
-                if (resp.msgtype == "NO_UPDATE"):
-                    break
-                
-                # get extended header
-                rawbytes = sock.recv(resp.header_length)
-                resp.extend_header(rawbytes)
-                
-                print(f'{resp.block_id}, {resp.block_len}')
-                
-                if (resp.block_id != expected_id):
-                    # send NACK when the counter does not match
-                    nack = Message(respond=True, msgtype="NACK")
-                    sock.sendto()
-                    
-                    # try to receive the block again
-                    continue
-                
+            payload = recv_write_payload(sock, "new_fw.py")
+            
+            # wait for SHA checksum receipt
+            rawbytes = sock.recv(1)
+            resp = Response(header=rawbytes)
+        
+            if (resp.msgtype == "UPDATE_START"):
                 ack = Message(respond=True, msgtype="ACK")
                 sock.sendto(ack.msg_byte, (host, port))
+                sha = recv_write_payload(sock, "shasum")
+                sha_new = hashlib.sha256()
+                sha_new.update(bytearray(payload, 'utf-8'))
+                sha_new_str = sha_new.hexdigest()
+                print(f"RCVD: {sha}, CALC:{sha_new_str}")
                 
-                rawbytes = sock.recv(resp.block_len)
-                with open('C:\\Users\\marti\\Documents\\GitHub\\IoT_project11_OTA\\new_fw.py', 'ab') as file:
-                    file.write(rawbytes)    
-                    
+                       
+            else:
+                print("failed update")
 
-                expected_id += 1
         elif (resp.msgtype == "NO_UPDATE"):
             print("nothing to update")
 
