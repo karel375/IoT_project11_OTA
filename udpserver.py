@@ -100,7 +100,7 @@ def run_udp_server(host=HOST, port=PORT):
                         
             if message.respond == 1:
                 if message.version != CURRENT_VERSION and message.msgtype == "POLL":
-                    with open(DIR_PATH + 'dummy_fw.py', 'rb') as fw:
+                    with open(DIR_PATH + 'fw_v3.py', 'rb') as fw:
                         payload = fw.read()
 
                     hash = hashlib.sha256()
